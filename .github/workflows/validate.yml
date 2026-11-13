@@ -1,0 +1,32 @@
+---
+name: Validate repository
+
+"on":
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        # actions/checkout v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Verify publication boundaries
+        run: |
+          test -f PUBLICATION_CHECKLIST.md
+          test -f cloudformation/README.md
+          test -f ansible/README.md
+          test -f terraform/README.md
+          if find . -type f \
+            \( -name '*.tfstate' -o -name '*.tfvars' \) \
+            -print -quit | grep -q .; then
+            echo "State or environment variables must not be committed"
+            exit 1
+          fi
